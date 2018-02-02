@@ -1,13 +1,5 @@
-var canvas,ctx,w,h;
+var canvas,ctx,w,h,balls;
 window.onload=init;
-var ball={
-  x:100,
-  y:100,
-  r:10,
-  speedX:3,
-  speedY:2,
-  color:"blue"
-}
 var monster={
   x:10,
   y:10,
@@ -20,6 +12,7 @@ function init(){
   ctx=canvas.getContext("2d");
   w=canvas.width;
   h=canvas.height;
+  balls=createBalls(10);
   mainLoop();
 }
 function mainLoop() {
@@ -27,9 +20,9 @@ function mainLoop() {
   ctx.clearRect(0,0,w,h);
   //绘制monster和ball
   drawMonster(monster);
-  drawball(ball);
+  drawBalls();
   //更新小球位置
-  updateBallPos(ball);
+  updateBallsPos();
   //再次绘制
   requestAnimationFrame(mainLoop);
 }
@@ -40,7 +33,12 @@ function drawMonster(m){
   ctx.fillRect(0,0,m.width,m.height);
   ctx.restore();
 }
-function drawball(b) {
+function drawBalls() {
+  balls.forEach(function(b){
+    drawCircle(b);
+  });
+}
+function drawCircle(b) {
   ctx.save();
   ctx.fillStyle=b.color;
   ctx.translate(b.x,b.y);
@@ -49,10 +47,13 @@ function drawball(b) {
   ctx.fill();
   ctx.restore();
 }
-function updateBallPos(b) {
-  b.x+=b.speedX;
-  b.y+=b.speedY;
-  testCollisionBallWithWall(b);
+function updateBallsPos() {
+  balls.forEach(function(b){
+    b.x+=b.speedX;
+    b.y+=b.speedY;
+    testCollisionBallWithWall(b);
+  })
+  
 }
 function testCollisionBallWithWall(b) {
   if((b.x+b.r)>w) {
@@ -74,4 +75,24 @@ function testCollisionBallWithWall(b) {
     b.y=b.r;
 
   }
+}
+function createBalls(n) {
+  var ballArrs=[];
+  for(var i=0;i<n;i++) {
+    var ball={
+      x:w/2,
+      y:h/2,
+      r:25*Math.random()+5,
+      speedX:-3+6*Math.random(),
+      speedY:-3+6*Math.random(),
+      color:getRandomColor()
+    }
+    ballArrs.push(ball);
+  }
+  return ballArrs;
+}
+function getRandomColor(){
+  var colors=['red', 'blue', 'cyan', 'purple', 'pink', 'green', 'yellow'];
+  var idx=Math.round(Math.random()*(colors.length-1));
+  return colors[idx];
 }
