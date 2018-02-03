@@ -1,6 +1,6 @@
-var canvas,ctx,w,h,balls;
+var canvas,ctx,w,h,balls,mousePos;
 window.onload=init;
-var monster={
+var player={
   x:10,
   y:10,
   width:10,
@@ -13,20 +13,50 @@ function init(){
   w=canvas.width;
   h=canvas.height;
   balls=createBalls(10);
+  canvas.addEventListener("mousemove",mouseMoved);
   mainLoop();
+}
+function mouseMoved(e){
+  mousePos=getMousePos(e);
+}
+function getMousePos(e) {
+  var canvasRect=canvas.getBoundingClientRect();
+  
+  return {
+    x:(e.clientX-canvasRect.left),
+    y:(e.clientY-canvasRect.top)
+  }
 }
 function mainLoop() {
   //擦除画板
   ctx.clearRect(0,0,w,h);
-  //绘制monster和ball
-  drawMonster(monster);
+  //绘制player和ball
+  drawPlayer(player);
   drawBalls();
+  //显示剩余小球数
+  showAliveBalls();
+
+
   //更新小球位置
   updateBallsPos();
+  //更新玩家位置
+  updatePlayerPos();
+  
   //再次绘制
   requestAnimationFrame(mainLoop);
 }
-function drawMonster(m){
+function showAliveBalls(){
+  ctx.save();
+  ctx.font="20px Arial";
+  if(balls.length>0){
+    ctx.fillText(balls.length,10,20);
+  }
+  else {
+    ctx.fillText("你赢了",10,20);
+  }
+  ctx.restore();
+}
+function drawPlayer(m){
   ctx.save();
   ctx.fillStyle=m.color;
   ctx.translate(m.x,m.y);
@@ -48,12 +78,52 @@ function drawCircle(b) {
   ctx.restore();
 }
 function updateBallsPos() {
-  balls.forEach(function(b){
+  balls.forEach(function(b,idx){
     b.x+=b.speedX;
     b.y+=b.speedY;
     testCollisionBallWithWall(b);
+    testCollisionBallWithPlayer(b,idx);
   })
+}
+function updatePlayerPos() {
+  if(mousePos){
+  player.x=mousePos.x-player.width/2;
+  player.y=mousePos.y-player.height/2;
+}
+ 
+}
+function testCollisionBallWithPlayer(b,idx) {
   
+    var isIntersect=ballRectIntersect(b.x,b.y,b.r,player.x,player.y,player.width,player.height);
+    
+    if(isIntersect) {
+      //把与矩形相交的小球从数组剔除
+      console.log("isInterset");
+      balls.splice(idx,1);
+    }
+  }
+
+function ballRectIntersect(centerX,centerY,radius,rectX,rectY,rectW,rectH){
+  //参数分别为：小球圆心x坐标、y坐标、小球半径、矩形左上角x坐标、y坐标、
+  //矩形宽度、高度。
+  var testX=centerX,testY=centerY;
+  //寻找矩形上距小球圆心最近的点
+  if(testX<rectX) {
+    testX=rectX;
+  }
+  if(testX>(rectX+rectW)) {
+    testX=rectX+rectW;
+  }
+  
+
+  if(testY<rectY){
+    testY=rectY;
+  }
+  if(testY>(rectY+rectH)) {
+    testY=rectY+rectH;
+  }
+  
+  return (((testY-centerY)*(testY-centerY)+(testX-centerX)*(testX-centerX))<radius*radius);
 }
 function testCollisionBallWithWall(b) {
   if((b.x+b.r)>w) {
